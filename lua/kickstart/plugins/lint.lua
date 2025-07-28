@@ -735,6 +735,9 @@ return {
   require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
+
+  -- require 'norcalli/nvim-colorizer.lua',
+  require('norcalli/nvim-colorizer.lua').setup(),
   -- require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 

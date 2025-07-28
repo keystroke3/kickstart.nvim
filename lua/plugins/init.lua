@@ -18,13 +18,17 @@ return {
   --    require('gitsigns').setup({ ... })
   --
   -- See `:help gitsigns` to understand what the configuration keys do
-  { -- Adds git related signs to the gutter, as well as utilities for managing changes
-    'lewis6991/gitsigns.nvim',
-    require('gitsigns').setup(),
-    opts = {
-      current_line_blame = true,
-    },
-  },
+  -- { -- Adds git related signs to the gutter, as well as utilities for managing changes
+  --   'lewis6991/gitsigns.nvim',
+  --   require('gitsigns').setup(),
+  --   opts = {
+  --     current_line_blame = true,
+  --   },
+  -- },
+  -- {
+  --   'norcalli/nvim-colorizer.lua',
+  --   require('colorizer').setup(),
+  -- },
   {
     'NeogitOrg/neogit',
     dependencies = {
@@ -43,6 +47,12 @@ return {
     end,
   },
 
+  {
+    'f-person/git-blame.nvim',
+    opts = {
+      date_format = '%r %H:%M',
+    },
+  },
   -- [[ Plugin Rename ]]
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
@@ -245,6 +255,7 @@ return {
     },
   },
   { 'Bilal2453/luvit-meta', lazy = true },
+  { 'nvim-java/nvim-java' },
   {
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
@@ -302,6 +313,19 @@ return {
           local map = function(keys, func, desc)
             vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
           end
+          vim.diagnostic.config {
+            virtual_text = {
+              format = function(diagnostic)
+                if diagnostic.code then
+                  return string.format('%s [%s]', diagnostic.message, diagnostic.code)
+                else
+                  return diagnostic.message
+                end
+              end,
+            },
+            signs = true,
+            underline = true,
+          }
 
           -- Jump to the definition of the word under your cursor.
           --  This is where a variable was first declared, or where a function is defined, etc.
@@ -398,6 +422,7 @@ return {
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
+        jdtls = {},
         gopls = {},
         pyright = {
           settings = {
@@ -418,9 +443,9 @@ return {
         -- tsserver = {},
         --
         clangd = {},
-        volar = {
-          languages = { 'typescript', 'vue', 'javascript' },
-        },
+        -- volar = {
+        --   languages = { 'typescript', 'vue', 'javascript' },
+        -- },
 
         lua_ls = {
           -- cmd = {...},
@@ -788,4 +813,118 @@ return {
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
   -- { import = 'custom.plugins' },
   --
+
+  {
+    'mfussenegger/nvim-dap',
+    dependencies = {
+      'leoluz/nvim-dap-go',
+      'rcarriga/nvim-dap-ui',
+      'theHamsta/nvim-dap-virtual-text',
+      'nvim-neotest/nvim-nio',
+      'williamboman/mason.nvim',
+    },
+    config = function()
+      local dap = require 'dap'
+      local ui = require 'dapui'
+
+      require('dapui').setup()
+      require('dap-go').setup {
+        dap_configurations = {
+          {
+            type = 'go',
+            name = 'Debug (Build Flags)',
+            request = 'launch',
+            program = '${file}',
+            buildFlags = require('dap-go').get_build_flags,
+          },
+          {
+            type = 'go',
+            name = 'Debug (Build Flags & Arguments)',
+            request = 'launch',
+            program = '${file}',
+            args = require('dap-go').get_arguments,
+            buildFlags = require('dap-go').get_build_flags,
+          },
+        },
+      }
+
+      -- vim.keymap.set('n', '<leader>dt', require('dapui').toggle())
+
+      require('nvim-dap-virtual-text').setup {
+        -- This just tries to mitigate the chance that I leak tokens here. Probably won't stop it from happening...
+        display_callback = function(variable)
+          local name = string.lower(variable.name)
+          local value = string.lower(variable.value)
+          if name:match 'secret' or name:match 'api' or value:match 'secret' or value:match 'api' then
+            return '*****'
+          end
+
+          if #variable.value > 15 then
+            return ' ' .. string.sub(variable.value, 1, 15) .. '... '
+          end
+
+          return ' ' .. variable.value
+        end,
+      }
+
+      -- Handled by nvim-dap-go
+      -- dap.adapters.go = {
+      --   type = "server",
+      --   port = "${port}",
+      --   executable = {
+      --     command = "dlv",
+      --     args = { "dap", "-l", "127.0.0.1:${port}" },
+      --   },
+      -- }
+
+      local elixir_ls_debugger = vim.fn.exepath 'elixir-ls-debugger'
+      if elixir_ls_debugger ~= '' then
+        dap.adapters.mix_task = {
+          type = 'executable',
+          command = elixir_ls_debugger,
+        }
+
+        dap.configurations.elixir = {
+          {
+            type = 'mix_task',
+            name = 'phoenix server',
+            task = 'phx.server',
+            request = 'launch',
+            projectDir = '${workspaceFolder}',
+            exitAfterTaskReturns = false,
+            debugAutoInterpretAllModules = false,
+          },
+        }
+      end
+
+      vim.keymap.set('n', '<leader>b', dap.toggle_breakpoint, { desc = 'Toggle breakpoint' })
+      vim.keymap.set('n', '<leader>gb', dap.run_to_cursor, { desc = 'go to breakpoint' })
+
+      -- Eval var under cursor
+      vim.keymap.set('n', '<space>?', function()
+        require('dapui').eval(nil, { enter = true })
+      end)
+
+      vim.keymap.set('n', '<F1>', dap.continue)
+      vim.keymap.set('n', '<F2>', dap.step_into)
+      vim.keymap.set('n', '<F3>', dap.step_over)
+      vim.keymap.set('n', '<F4>', dap.step_out)
+      vim.keymap.set('n', '<F5>', dap.step_back)
+      vim.keymap.set('n', '<F13>', dap.restart)
+      vim.keymap.set('n', '<leader>dt', ui.toggle, { desc = 'Toggle DAP UI' })
+
+      dap.listeners.before.attach.dapui_config = function()
+        ui.open()
+      end
+      dap.listeners.before.launch.dapui_config = function()
+        ui.open()
+      end
+      dap.listeners.before.event_terminated.dapui_config = function()
+        ui.close()
+      end
+      dap.listeners.before.event_exited.dapui_config = function()
+        ui.close()
+      end
+    end,
+  },
 }

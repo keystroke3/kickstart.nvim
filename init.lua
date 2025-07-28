@@ -81,6 +81,7 @@ If you experience any errors while trying to install kickstart, run `:checkhealt
 I hope you enjoy your Neovim journey,
 - TJ
 
+
 P.S. You can delete this when you're done too. It's your config now! :)
 --]]
 
@@ -157,7 +158,9 @@ vim.opt.inccommand = 'split'
 vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.opt.scrolloff = 10
+-- vim.opt.scrolloff = 10
+
+vim.opt.titlestring = [[%f %h%m%r%w %{v:progname} (%{tabpagenr()} of %{tabpagenr('$')})]]
 
 vim.opt.foldlevel = 20
 vim.opt.foldmethod = 'expr'
@@ -195,6 +198,7 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostics' })
 
 -- [[ Yank Commands ]]
 vim.keymap.set({ 'n', 'v' }, '<leader>y', [["+y"]])
@@ -213,8 +217,10 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
--- BarBarVim Bindings
 local opts = { noremap = true, silent = true }
+vim.keymap.set('n', '<leader>lr', '<Cmd>LspRestart<CR>', { desc = '[L]sp [R]estart' })
+
+-- BarBarVim Bindings
 vim.keymap.set('n', '<leader>1', '<Cmd>BufferGoto 1<CR>', opts)
 vim.keymap.set('n', '<leader>2', '<Cmd>BufferGoto 2<CR>', opts)
 vim.keymap.set('n', '<leader>3', '<Cmd>BufferGoto 3<CR>', opts)
