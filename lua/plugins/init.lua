@@ -45,6 +45,7 @@ return {
         },
       }
     end,
+    vim.keymap.set('n', '<leader>g', '<Cmd>Neogit diff<CR>'),
   },
 
   {
@@ -203,11 +204,18 @@ return {
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
+      vim.keymap.set('n', '<leader>ss', function()
+        builtin.spell_suggest {
+          layout_config = {
+            height = 0.25,
+            width = 0.25,
+          },
+        }
+      end, { desc = '[S]pell [S]uggest' })
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>pf', builtin.find_files, { desc = '[S]earch [F]iles' })
-      vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>ps', builtin.live_grep, { desc = '[S]earch by [G]rep' })
@@ -512,7 +520,7 @@ return {
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
+        local disable_filetypes = {}
         return {
           timeout_ms = 500,
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
@@ -549,12 +557,12 @@ return {
           -- `friendly-snippets` contains a variety of premade snippets.
           --    See the README about individual language/framework/plugin snippets:
           --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              require('luasnip.loaders.from_vscode').lazy_load()
+            end,
+          },
         },
       },
       'saadparwaiz1/cmp_luasnip',
@@ -644,28 +652,53 @@ return {
       }
     end,
   },
+  {
+    'cryptomilk/nightcity.nvim',
+    opts = {
+      style = 'afterlife', -- The theme comes in two styles: kabuki or afterlife
+      terminal_colors = true, -- Use colors used when opening a `:terminal`
+      invert_colors = {
+        cursor = true,
+        diff = true,
+        error = true,
+        search = true,
+        selection = false,
+        signs = false,
+        statusline = true,
+        tabline = false,
+      },
+      font_style = {
+        comments = { italic = true },
+        keywords = { italic = true },
+        functions = { bold = true },
+        variables = {},
+        search = { bold = true },
+      },
+      plugins = { default = true },
+      on_highlights = function(groups, c)
+        groups.String = { fg = c.green, bg = c.none }
+        groups.TabLineSel = { fg = c.xgray9, bg = c.darkyellow }
+        groups['@lsp.typemod.parameter.readonly'] = { italic = true }
+        groups['@lsp.typemod.variable.readonly'] = { italic = true }
+      end,
+    },
 
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    -- 'folke/tokyonight.nvim',
-    'luisiacc/gruvbox-baby',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
     init = function()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'gruvbox-baby'
-
-      -- You can configure highlights by doing something like:
-      vim.cmd.hi 'Comment gui=none'
+      vim.cmd.colorscheme 'nightcity'
     end,
   },
 
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
+
+  {
+    'windwp/nvim-autopairs',
+    event = 'InsertEnter',
+    config = true,
+    opts = {
+      ignored_next_char = '[%w%.]',
+    },
+  },
 
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
@@ -684,6 +717,8 @@ return {
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
+
+      -- require('mini.pairs').setup()
 
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
@@ -729,8 +764,6 @@ return {
         NvimTree = true,
         -- Or, specify the text used for the offset:
         undotree = { text = 'undotree' },
-        -- Or, specify the event which the sidebar executes when leaving:
-        ['neo-tree'] = { event = 'BufWipeout' },
         -- Or, specify both
         Outline = { event = 'BufWinLeave', text = 'symbols-outline' },
       },
@@ -748,8 +781,11 @@ return {
       require('nvim-tree').setup {}
     end,
   },
+  { 'nvim-treesitter/nvim-treesitter-context' },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    dependencies = { 'OXY2DEV/markview.nvim' },
+    lazy = false,
     build = ':TSUpdate',
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
@@ -802,9 +838,6 @@ return {
   -- require 'kickstart.plugins.debug',
   require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
-  require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
@@ -813,7 +846,7 @@ return {
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
   -- { import = 'custom.plugins' },
   --
-
+  { 'ap/vim-css-color' },
   {
     'mfussenegger/nvim-dap',
     dependencies = {
@@ -898,7 +931,7 @@ return {
       end
 
       vim.keymap.set('n', '<leader>b', dap.toggle_breakpoint, { desc = 'Toggle breakpoint' })
-      vim.keymap.set('n', '<leader>gb', dap.run_to_cursor, { desc = 'go to breakpoint' })
+      -- vim.keymap.set('n', '<leader>gb', dap.run_to_cursor, { desc = 'go to breakpoint' })
 
       -- Eval var under cursor
       vim.keymap.set('n', '<space>?', function()
