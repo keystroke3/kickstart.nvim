@@ -1,4 +1,7 @@
 vim.opt.encoding = 'utf-8'
+vim.o.tabstop = 4
+vim.o.shiftwidth = 4
+-- vim.o.expandtab = true
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -25,6 +28,7 @@ vim.opt.mouse = 'a'
 -- Don't show the mode, since it's already in the status line
 vim.opt.showmode = false
 
+-- vim.opt.spellang = 'en_us'
 vim.opt.spell = true
 
 -- Sync clipboard between OS and Neovim.
@@ -76,8 +80,8 @@ vim.opt.cursorline = true
 
 vim.opt.titlestring = [[%f %h%m%r%w %{v:progname} (%{tabpagenr()} of %{tabpagenr('$')})]]
 
-vim.opt.foldlevel = 20
-vim.opt.foldmethod = 'indent'
+vim.o.foldmethod = 'indent'
+vim.o.foldlevel = 50
 vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
 
 -- [[ Basic Keymaps ]]
@@ -150,7 +154,8 @@ vim.keymap.set('n', '<leader>0', '<Cmd>BufferLast<CR>', opts)
 vim.keymap.set('n', '<leader>w', '<Cmd>BufferClose<CR>', opts)
 
 -- NvimTree Bindings
-vim.keymap.set('n', '<leader>n', '<Cmd>NvimTreeToggle<CR>')
+vim.keymap.set('n', '<leader>nn', '<Cmd>NvimTreeToggle<CR>')
+vim.keymap.set('n', '<leader>nf', '<Cmd>NvimTreeFindFile<CR>')
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
